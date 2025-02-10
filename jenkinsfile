@@ -1,0 +1,49 @@
+
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "yourdockerhubusername/yourflaskapp:latest"
+        EC2_USER = "ec2-user"  // Change to 'ubuntu' if using an Ubuntu-based instance
+        EC2_HOST = "your.ec2.public.ip"
+        SSH_KEY = "/path/to/your/private-key.pem"
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
+                    sh 'docker push $DOCKER_IMAGE'
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                script {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY $EC2_USER@$EC2_HOST << 'EOF'
+                        docker stop flask_app || true
+                        docker rm flask_app || true
+                        docker pull $DOCKER_IMAGE
+                        docker run -d -p 8080:8080 --name flask_app $DOCKER_IMAGE
+                        EOF
+                    """
+                }
+            }
+        }
+    }
+}
