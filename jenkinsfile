@@ -1,8 +1,8 @@
 pipeline {
-    agent any
+    agent local-agent
 
     environment {
-        DOCKER_IMAGE = "prashreddy0912/flaskapp:latest"
+        DOCKER_IMAGE = "falskapp"
         EC2_USER = "ec2-user"
         // EC2_HOST = "your.ec2.public.ip"
         EC2_HOST = "13.200.195.68"
@@ -30,7 +30,7 @@ pipeline {
                 docker stop flask_app || true
                 docker rm flask_app || true
                 docker pull $DOCKER_IMAGE
-                docker run -d -p 8080:8080 --name flask_app $DOCKER_IMAGE
+                docker run -d -p 5020:5020 --name flask_app $DOCKER_IMAGE
                 '
                 """
             }
