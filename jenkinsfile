@@ -1,44 +1,38 @@
 pipeline {
-    agent any
+    agent local-agent
 
     environment {
-        DOCKER_IMAGE = "prashreddy0912/flaskapp:latest"
+        DOCKER_IMAGE = "falskapp"
         EC2_USER = "ec2-user"
+        // EC2_HOST = "your.ec2.public.ip"
         EC2_HOST = "13.200.195.68"
+        // SSH_KEY = "/path/to/private-key.pem"
+        SSH_KEY = "C:\Users\15769\Downloads\rudra-keypair.ppk"
     }
-
-    stages {
+  stages {
         stage('Clone Repository') {
             steps {
                 checkout scm
             }
         }
-
         stage('Build & Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                    docker build -t $DOCKER_IMAGE .
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $DOCKER_IMAGE
-                    """
-                }
+                sh "docker build -t $DOCKER_IMAGE ."
+                sh "docker login -u prashreddy0912 -p qwertyuiop"
+                sh "docker push $DOCKER_IMAGE"
             }
         }
 
         stage('Deploy to EC2') {
             steps {
-                withCredentials([file(credentialsId: 'ssh-key-cred-id', variable: 'SSH_KEY')]) {
-                    sh """
-                    scp -o StrictHostKeyChecking=no -i $SSH_KEY app.jar $EC2_USER@$EC2_HOST:/home/$EC2_USER/
-                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $EC2_USER@$EC2_HOST 'bash -c "
-                    docker stop flask_app || true
-                    docker rm flask_app || true
-                    docker pull $DOCKER_IMAGE
-                    docker run -d -p 5020:5020 --name flask_app $DOCKER_IMAGE
-                    "'
-                    """
-                }
+                sh """
+                ssh -i $SSH_KEY $EC2_USER@$EC2_HOST '
+                docker stop flask_app || true
+                docker rm flask_app || true
+                docker pull $DOCKER_IMAGE
+                docker run -d -p 5020:5020 --name flask_app $DOCKER_IMAGE
+                '
+                """
             }
         }
     }
