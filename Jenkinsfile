@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "falskapp"
+        DOCKER_IMAGE = "flaskapp"
         EC2_USER = "ec2-user"
         // EC2_HOST = "your.ec2.public.ip"
-        EC2_HOST = "13.200.195.68"
+        EC2_HOST = "13.200.195.68" add
         // SSH_KEY = "/path/to/private-key.pem"
         SSH_KEY = "C:\Users\15769\Downloads\rudra-keypair.pem"
     }
